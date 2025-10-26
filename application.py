@@ -9,6 +9,7 @@ from numpy.lib.function_base import average
 from numpy import zeros
 from numpy import asarray
 
+from .Wall import align_walls, walls_from_json, walls_to_json
 from mrcnn.config import Config
 
 from mrcnn.model import MaskRCNN
@@ -168,6 +169,11 @@ def prediction():
 	data['Width']=w
 	data['Height']=h
 	data['averageDoor']=averageDoor
+
+	walls = walls_from_json(data)
+	align_walls(walls)
+	data["points"] = walls_to_json(walls)
+
 	return jsonify(data)
 		
     
