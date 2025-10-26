@@ -3,6 +3,7 @@ from sys import argv
 from typing import Any
 from dataclasses import dataclass, field
 import numpy as np
+from MeshBuilder import MeshBuilder
 
 """
 Directions:
@@ -18,6 +19,8 @@ class Wall:
     y1: float
     x2: float
     y2: float
+
+    type: str
 
     group: "set[Wall] | None" = None
 
@@ -56,6 +59,12 @@ class Wall:
         self.x2 += x
         self.y1 += y
         self.y2 += y
+
+    def normalize(self, normalizer: float):
+        self.x1 *= normalizer
+        self.x2 *= normalizer
+        self.y1 *= normalizer
+        self.y2 *= normalizer
 
     def link(self, other: "Wall"):
         # If both walls are not in a group, create a new group with both of them
@@ -217,12 +226,13 @@ def align_walls(walls: "list[Wall]"):
 def walls_from_json(data: dict):
     walls: "list[Wall]" = []
 
-    for point in data["points"]:
+    for i, point in enumerate(data["points"]):
         walls.append(Wall(
             point["x1"], # type: ignore
             point["y1"],
             point["x2"],
             point["y2"],
+            data["classes"][i]["name"]
         ))
     
     return walls
@@ -240,15 +250,80 @@ def walls_to_json(walls: "list[Wall]"):
 
     return points
 
+def build_geometry(walls: "list[Wall]"):
+    pass
+
 if __name__ == "__main__":
     with open(argv[1], 'rt') as file:
         content = file.read()
 
-    data = loads(content)
+    data: dict = loads(content)
     walls = walls_from_json(data)
     align_walls(walls)
     data["points"] = walls_to_json(walls)
 
-    with open(argv[1] + ".new.json", "wt") as file:
-        file.write(dumps(data, indent=4))
+    normalizer = 1 / (data["averageDoor"] * 0.5)
+    for wall in walls:
+        wall.normalize(normalizer)
+
+    builder = MeshBuilder()
+
+    z = 2
+
+    for index, wall in enumerate(walls):
+        # Z-
+        builder.add_quad(
+            [wall.x1, wall.y1, 0],
+            [wall.x1, wall.y2, 0],
+            [wall.x2, wall.y2, 0],
+            [wall.x2, wall.y1, 0],
+        )
+
+        # Z+
+        builder.add_quad(
+            [wall.x1, wall.y1, z],
+            [wall.x1, wall.y2, z],
+            [wall.x2, wall.y2, z],
+            [wall.x2, wall.y1, z],
+            invert_normals=True,
+        )
+
+        # Y+
+        builder.add_quad(
+            [wall.x1, wall.y1, 0],
+            [wall.x2, wall.y1, 0],
+            [wall.x2, wall.y1, z],
+            [wall.x1, wall.y1, z],
+        )
+
+        # Y-
+        builder.add_quad(
+            [wall.x1, wall.y2, 0],
+            [wall.x2, wall.y2, 0],
+            [wall.x2, wall.y2, z],
+            [wall.x1, wall.y2, z],
+            invert_normals=True,
+        )
+
+        # X+
+        builder.add_quad(
+            [wall.x1, wall.y1, 0],
+            [wall.x1, wall.y2, 0],
+            [wall.x1, wall.y2, z],
+            [wall.x1, wall.y1, z],
+            invert_normals=True,
+        )
+
+        # X-
+        builder.add_quad(
+            [wall.x2, wall.y1, 0],
+            [wall.x2, wall.y2, 0],
+            [wall.x2, wall.y2, z],
+            [wall.x2, wall.y1, z],
+        )
+
+        builder.create_mesh(f"{wall.type}_{index}")
+    
+    gltf = builder.build()
+    gltf.export(argv[1] + ".new.glb")
 
