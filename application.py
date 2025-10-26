@@ -15,6 +15,7 @@ from mrcnn.model import MaskRCNN
 
 from skimage.draw import polygon2mask
 from skimage.io import imread
+from skimage.color import gray2rgb
 
 from datetime import datetime
 
@@ -66,6 +67,7 @@ class PredictionConfig(Config):
 	# simplify GPU config
 	GPU_COUNT = 1
 	IMAGES_PER_GPU = 1
+	DETECTION_MIN_CONFIDENCE = 0.5
 	
 @application.before_first_request
 def load_model():
@@ -86,12 +88,12 @@ def load_model():
 def myImageLoader(imageInput):
 	image =  numpy.asarray(imageInput)
 	
-	
-	h,w,c=image.shape 
 	if image.ndim != 3:
-		image = skimage.color.gray2rgb(image)
+		image = gray2rgb(image)
 		if image.shape[-1] == 4:
 			image = image[..., :3]
+
+	h,w,c=image.shape 
 	return image,w,h
 
 def getClassNames(classIds):
