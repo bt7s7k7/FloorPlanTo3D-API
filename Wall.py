@@ -416,7 +416,7 @@ if __name__ == "__main__":
                 [x2, y1, 0],
             )
 
-        builder.create_mesh(f"floor_{name}")
+        builder.create_mesh(f"Room_{name}")
 
     z = 2
 
@@ -472,7 +472,7 @@ if __name__ == "__main__":
             invert_normals=True,
         )
 
-        builder.create_mesh(f"{wall.type}_{index}")
+        builder.create_mesh(f"{wall.type.capitalize()}_{index}")
     
     gltf = builder.build()
     gltf.export(argv[1] + ".new.glb")
