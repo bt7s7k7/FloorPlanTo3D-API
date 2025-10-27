@@ -31,6 +31,58 @@ class MeshBuilder:
             self.index_stack.extend([i + 0, i + 1, i + 2, i + 2, i + 3, i + 0])
         self.vertex_stack.extend([a, b, c, d])
 
+    def add_cube(self, x1: float, y1: float, x2: float, y2: float, z1: float, z2: float):
+         # Z-
+        self.add_quad(
+            [x1, y1, z1],
+            [x1, y2, z1],
+            [x2, y2, z1],
+            [x2, y1, z1],
+            invert_normals=True,
+        )
+
+        # Z+
+        self.add_quad(
+            [x1, y1, z2],
+            [x1, y2, z2],
+            [x2, y2, z2],
+            [x2, y1, z2],
+        )
+
+        # Y+
+        self.add_quad(
+            [x1, y1, z1],
+            [x2, y1, z1],
+            [x2, y1, z2],
+            [x1, y1, z2],
+            invert_normals=True,
+        )
+
+        # Y-
+        self.add_quad(
+            [x1, y2, z1],
+            [x2, y2, z1],
+            [x2, y2, z2],
+            [x1, y2, z2],
+        )
+
+        # X+
+        self.add_quad(
+            [x1, y1, z1],
+            [x1, y2, z1],
+            [x1, y2, z2],
+            [x1, y1, z2],
+        )
+
+        # X-
+        self.add_quad(
+            [x2, y1, z1],
+            [x2, y2, z1],
+            [x2, y2, z2],
+            [x2, y1, z2],
+            invert_normals=True,
+        )
+
     def create_mesh(self, name: str, indices = None, vertices = None, invert_normals = False):
         if indices is None:
             indices = self.index_stack

@@ -418,60 +418,37 @@ if __name__ == "__main__":
 
         builder.create_mesh(f"Room_{name}")
 
-    z = 2
+    height = 2
 
     for index, wall in enumerate(walls):
-        # Z-
-        builder.add_quad(
-            [wall.x1, wall.y1, 0],
-            [wall.x1, wall.y2, 0],
-            [wall.x2, wall.y2, 0],
-            [wall.x2, wall.y1, 0],
-            invert_normals=True,
-        )
+        x1 = wall.x1
+        y1 = wall.y1
+        x2 = wall.x2
+        y2 = wall.y2
 
-        # Z+
-        builder.add_quad(
-            [wall.x1, wall.y1, z],
-            [wall.x1, wall.y2, z],
-            [wall.x2, wall.y2, z],
-            [wall.x2, wall.y1, z],
-        )
+        if wall.type == "door":
+            builder.add_quad(
+                [x1, y1, 0],
+                [x1, y2, 0],
+                [x2, y2, 0],
+                [x2, y1, 0],
+            )
+            builder.create_mesh(f"Floor_{index}")
 
-        # Y+
-        builder.add_quad(
-            [wall.x1, wall.y1, 0],
-            [wall.x2, wall.y1, 0],
-            [wall.x2, wall.y1, z],
-            [wall.x1, wall.y1, z],
-            invert_normals=True,
-        )
+            if wall.is_horizontal():
+                center = (y1 + y2) * 0.5
+                y1 = center - 0.1
+                y2 = center + 0.1
+            else:
+                center = (x1 + x2) * 0.5
+                x1 = center - 0.1
+                x2 = center + 0.1
 
-        # Y-
-        builder.add_quad(
-            [wall.x1, wall.y2, 0],
-            [wall.x2, wall.y2, 0],
-            [wall.x2, wall.y2, z],
-            [wall.x1, wall.y2, z],
-        )
-
-        # X+
-        builder.add_quad(
-            [wall.x1, wall.y1, 0],
-            [wall.x1, wall.y2, 0],
-            [wall.x1, wall.y2, z],
-            [wall.x1, wall.y1, z],
-        )
-
-        # X-
-        builder.add_quad(
-            [wall.x2, wall.y1, 0],
-            [wall.x2, wall.y2, 0],
-            [wall.x2, wall.y2, z],
-            [wall.x2, wall.y1, z],
-            invert_normals=True,
-        )
-
+        if wall.type == "window":
+            builder.add_cube(x1, y1, x2, y2, 0, height / 3)
+            builder.add_cube(x1, y1, x2, y2, height * 2/3, height)
+        else:
+            builder.add_cube(x1, y1, x2, y2, 0, height)
         builder.create_mesh(f"{wall.type.capitalize()}_{index}")
     
     gltf = builder.build()
