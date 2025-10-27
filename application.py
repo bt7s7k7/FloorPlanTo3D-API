@@ -9,7 +9,7 @@ from numpy.lib.function_base import average
 from numpy import zeros
 from numpy import asarray
 
-from .Wall import align_walls, walls_from_json, walls_to_json
+from Wall import build_3d_model
 from mrcnn.config import Config
 
 from mrcnn.model import MaskRCNN
@@ -29,7 +29,7 @@ from matplotlib import pyplot
 from matplotlib.patches import Rectangle
 from keras.backend import clear_session
 import json
-from flask import Flask, flash, request,jsonify, redirect, url_for
+from flask import Flask, Response, flash, request,jsonify, redirect, send_file, url_for
 from werkzeug.utils import secure_filename
 
 from skimage.io import imread
@@ -170,12 +170,11 @@ def prediction():
 	data['Height']=h
 	data['averageDoor']=averageDoor
 
-	walls = walls_from_json(data)
-	align_walls(walls)
-	data["points"] = walls_to_json(walls)
-
-	return jsonify(data)
-		
+	gltf = build_3d_model(data)
+	bytes = BytesIO()
+	gltf.write_glb(bytes)
+	bytes.seek(0)
+	return send_file(bytes, mimetype="model/gltf-binary")
     
 if __name__ =='__main__':
 	application.debug=True

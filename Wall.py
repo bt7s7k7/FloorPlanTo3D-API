@@ -389,11 +389,7 @@ def find_rooms(walls: "list[Wall]", tolerance: float):
     print(f"Room grid: {width} x {height}, Room Count: {room_id - 1}")
     return room_meshes
 
-if __name__ == "__main__":
-    with open(argv[1], 'rt') as file:
-        content = file.read()
-
-    data: dict = loads(content)
+def build_3d_model(data: dict):
     walls = walls_from_json(data)
     align_walls(walls)
     data["points"] = walls_to_json(walls)
@@ -451,6 +447,13 @@ if __name__ == "__main__":
             builder.add_cube(x1, y1, x2, y2, 0, height)
         builder.create_mesh(f"{wall.type.capitalize()}_{index}")
     
-    gltf = builder.build()
+    return builder.build()
+
+if __name__ == "__main__":
+    with open(argv[1], 'rt') as file:
+        content = file.read()
+
+    data: dict = loads(content)
+    gltf = build_3d_model(data)
     gltf.export(argv[1] + ".new.glb")
 
