@@ -3,42 +3,28 @@ import PIL
 import numpy
 
 
-from numpy.lib.function_base import average
 
 
-from numpy import zeros
-from numpy import asarray
 
 from Wall import build_3d_model
 from mrcnn.config import Config
 
 from mrcnn.model import MaskRCNN
 
-from skimage.draw import polygon2mask
-from skimage.io import imread
 from skimage.color import gray2rgb
 
-from datetime import datetime
 
 
 
 from io import BytesIO
-from mrcnn.utils import extract_bboxes
 from numpy import expand_dims
-from matplotlib import pyplot
-from matplotlib.patches import Rectangle
-from keras.backend import clear_session
-import json
-from flask import Flask, Response, flash, request,jsonify, redirect, send_file, url_for
-from werkzeug.utils import secure_filename
+from flask import Flask, request,send_file
 
-from skimage.io import imread
 from mrcnn.model import mold_image
 
 import tensorflow as tf
 import sys
 
-from PIL import Image
 
 
 
@@ -49,7 +35,7 @@ global cfg
 ROOT_DIR = os.path.abspath("./")
 WEIGHTS_FOLDER = "./weights"
 
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 
 sys.path.append(ROOT_DIR)
 
