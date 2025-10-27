@@ -322,7 +322,7 @@ def find_rooms(walls: "list[Wall]", tolerance: float):
                 room_id += 1
 
     occupied = [0] * len(tiles)
-    room_meshes: "dict[str, list[tuple[float, float, float, float]]]" = {}
+    room_meshes: "dict[int, list[tuple[float, float, float, float]]]" = {}
     for y in range(height):
         for x in range(width):
             room_id = tiles[x + y * width]
@@ -361,12 +361,30 @@ def find_rooms(walls: "list[Wall]", tolerance: float):
                 for jx in range(x, ix):
                     occupied[jx + jy * width] = room_id
             
-            room_meshes.setdefault(f"{room_id}", []).append((
+            room_meshes.setdefault(room_id, []).append((
                 x_grid[x],
                 y_grid[y],
                 x_grid[ix],
                 y_grid[iy],
             ))
+    
+    for x in range(width):
+        room_id = tiles[x]
+        if room_id != 0 and room_id in room_meshes:
+            del room_meshes[room_id]
+
+        room_id = tiles[x + (width * (height - 1))]
+        if room_id != 0 and room_id in room_meshes:
+            del room_meshes[room_id]
+
+    for y in range(height):
+        room_id = tiles[y * width]
+        if room_id != 0 and room_id in room_meshes:
+            del room_meshes[room_id]
+
+        room_id = tiles[y * width + width - 1]
+        if room_id != 0 and room_id in room_meshes:
+            del room_meshes[room_id]
             
     print(f"Room grid: {width} x {height}, Room Count: {room_id - 1}")
     return room_meshes
