@@ -60,13 +60,6 @@ class MeshBuilder:
         if invert_normals:
             indices = indices[::-1]
 
-        # (!) Because the data from the converter is meant for blender it has a different coordinate
-        # system
-
-        # 1. Negate the third column (Z)
-        # arr_original[:, 2] selects all rows (:) and the third column (index 2)
-        vertices[:, 2] = -vertices[:, 2]
-
         # 2. Reorder the columns to (0, 2, 1) using fancy indexing
         # This selects column 0 (X), the modified column 2 (-Z), and column 1 (Y)
         vertices = vertices[:, [0, 2, 1]]

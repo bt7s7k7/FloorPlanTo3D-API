@@ -1,4 +1,5 @@
-from json import dumps, loads
+from bisect import bisect_left
+from json import loads
 from sys import argv
 from typing import Any
 from dataclasses import dataclass, field
@@ -253,6 +254,123 @@ def walls_to_json(walls: "list[Wall]"):
 def build_geometry(walls: "list[Wall]"):
     pass
 
+def find_rooms(walls: "list[Wall]", tolerance: float):
+    x_grid: "list[float]" = []
+    y_grid: "list[float]" = []
+
+    def push_grid_line(grid: "list[float]", position: float):
+        index = bisect_left(grid, position)
+        neighbour_min = grid[index - 1] if 0 <= index - 1 < len(grid) else None
+        if neighbour_min is not None and abs(position - neighbour_min) < tolerance:
+            return
+
+        neighbour_max = grid[index] if 0 <= index < len(grid) else None
+        if neighbour_max is not None and abs(position - neighbour_max) < tolerance:
+            return
+        
+        grid.insert(index, position)
+
+
+    for wall in walls:
+        push_grid_line(x_grid, wall.x1)
+        push_grid_line(x_grid, wall.x2)
+        push_grid_line(y_grid, wall.y1)
+        push_grid_line(y_grid, wall.y2)
+    
+    width = len(x_grid) - 1
+    height = len(y_grid) - 1
+    tiles: "list[int]" = [-1] * (width * height)
+
+    for y, (y1, y2) in enumerate(zip(y_grid, y_grid[1:])):
+        for x, (x1, x2) in enumerate(zip(x_grid, x_grid[1:])):
+            center_x = (x1 + x2) * 0.5
+            center_y = (y1 + y2) * 0.5
+
+            for wall in walls:
+                if wall.x1 < center_x < wall.x2 \
+                    and wall.y1 < center_y < wall.y2:
+                    tiles[x + y * width] = 0
+                    break
+    
+    room_id = 1
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+
+    for y in range(height):
+        for x in range(width):
+            index = x + y * width
+
+            # Start floodfill if an unvisited free cell is found
+            if tiles[index] == -1:
+                stack = [(x, y)]
+                tiles[index] = room_id
+
+                while stack:
+                    cx, cy = stack.pop()
+
+                    for dx, dy in directions:
+                        nx, ny = cx + dx, cy + dy
+
+                        # Check bounds
+                        if 0 <= nx < width and 0 <= ny < height:
+                            n_index = nx + ny * width
+
+                            # Check if the neighbor is a free cell (-1)
+                            if tiles[n_index] == -1:
+                                tiles[n_index] = room_id
+                                stack.append((nx, ny))
+
+                room_id += 1
+
+    occupied = [0] * len(tiles)
+    room_meshes: "dict[str, list[tuple[float, float, float, float]]]" = {}
+    for y in range(height):
+        for x in range(width):
+            room_id = tiles[x + y * width]
+            if room_id == 0 or occupied[x + y * width] != 0:
+                continue
+
+            iy = y + 1
+            for iy in range(iy, height):
+                if tiles[x + iy * width] != room_id or occupied[x + iy * width] != 0:
+                    break
+
+            if iy == width:
+                iy -= 1
+
+            if y == iy:
+                continue
+            
+            ix = x + 1
+            for ix in range(ix, width):
+                failed = False
+
+                for jy in range(y, iy):
+                    if tiles[ix + jy * width] != room_id or occupied[ix + jy * width] != 0:
+                        failed = True
+
+                if failed:
+                    break
+                
+            if ix == width:
+                ix -= 1
+            
+            if x == ix:
+                continue
+            
+            for jy in range(y, iy):
+                for jx in range(x, ix):
+                    occupied[jx + jy * width] = room_id
+            
+            room_meshes.setdefault(f"{room_id}", []).append((
+                x_grid[x],
+                y_grid[y],
+                x_grid[ix],
+                y_grid[iy],
+            ))
+            
+    print(f"Room grid: {width} x {height}, Room Count: {room_id - 1}")
+    return room_meshes
+
 if __name__ == "__main__":
     with open(argv[1], 'rt') as file:
         content = file.read()
@@ -266,7 +384,21 @@ if __name__ == "__main__":
     for wall in walls:
         wall.normalize(normalizer)
 
+
     builder = MeshBuilder()
+    rooms = find_rooms(walls, tolerance=0.05)
+    for name in rooms.keys():
+        quads = rooms[name]
+
+        for (x1, y1, x2, y2) in quads:
+            builder.add_quad(
+                [x1, y1, 0],
+                [x1, y2, 0],
+                [x2, y2, 0],
+                [x2, y1, 0],
+            )
+
+        builder.create_mesh(f"floor_{name}")
 
     z = 2
 
@@ -277,6 +409,7 @@ if __name__ == "__main__":
             [wall.x1, wall.y2, 0],
             [wall.x2, wall.y2, 0],
             [wall.x2, wall.y1, 0],
+            invert_normals=True,
         )
 
         # Z+
@@ -285,7 +418,6 @@ if __name__ == "__main__":
             [wall.x1, wall.y2, z],
             [wall.x2, wall.y2, z],
             [wall.x2, wall.y1, z],
-            invert_normals=True,
         )
 
         # Y+
@@ -294,6 +426,7 @@ if __name__ == "__main__":
             [wall.x2, wall.y1, 0],
             [wall.x2, wall.y1, z],
             [wall.x1, wall.y1, z],
+            invert_normals=True,
         )
 
         # Y-
@@ -302,7 +435,6 @@ if __name__ == "__main__":
             [wall.x2, wall.y2, 0],
             [wall.x2, wall.y2, z],
             [wall.x1, wall.y2, z],
-            invert_normals=True,
         )
 
         # X+
@@ -311,7 +443,6 @@ if __name__ == "__main__":
             [wall.x1, wall.y2, 0],
             [wall.x1, wall.y2, z],
             [wall.x1, wall.y1, z],
-            invert_normals=True,
         )
 
         # X-
@@ -320,6 +451,7 @@ if __name__ == "__main__":
             [wall.x2, wall.y2, 0],
             [wall.x2, wall.y2, z],
             [wall.x2, wall.y1, z],
+            invert_normals=True,
         )
 
         builder.create_mesh(f"{wall.type}_{index}")
