@@ -414,7 +414,7 @@ def build_3d_model(data: dict):
 
         builder.create_mesh(f"Room_{name}")
 
-    height = 2.8
+    height = 2.6
 
     for index, wall in enumerate(walls):
         x1 = wall.x1
