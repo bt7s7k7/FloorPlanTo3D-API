@@ -165,5 +165,5 @@ def prediction():
 if __name__ =='__main__':
 	application.debug=True
 	print('===========before running==========')
-	application.run()
+	application.run(host="0.0.0.0", port=8081)
 	print('===========after running==========')

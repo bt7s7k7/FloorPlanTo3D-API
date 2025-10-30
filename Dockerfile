@@ -49,7 +49,7 @@ COPY ./weights ${PROGRAM_PATH}/weights
 COPY ./mrcnn ${PROGRAM_PATH}/mrcnn
 COPY ./application.py ./MeshBuilder.py ./Wall.py ${PROGRAM_PATH}/
 
-EXPOSE 5000
+EXPOSE 8081
 
 WORKDIR ${PROGRAM_PATH}
 ENTRYPOINT python3.6 application.py
