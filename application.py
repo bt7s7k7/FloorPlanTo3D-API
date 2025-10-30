@@ -6,7 +6,7 @@ import numpy
 
 
 
-from Wall import build_3d_model
+from build_3d_model import build_3d_model
 from mrcnn.config import Config
 
 from mrcnn.model import MaskRCNN

@@ -394,7 +394,7 @@ def build_3d_model(data: dict):
     align_walls(walls)
     data["points"] = walls_to_json(walls)
 
-    normalizer = 1 / (data["averageDoor"] * 0.5)
+    normalizer = 1 / (data["averageDoor"] / 0.8)
     for wall in walls:
         wall.normalize(normalizer)
 
@@ -414,7 +414,7 @@ def build_3d_model(data: dict):
 
         builder.create_mesh(f"Room_{name}")
 
-    height = 2
+    height = 2.8
 
     for index, wall in enumerate(walls):
         x1 = wall.x1
@@ -422,7 +422,12 @@ def build_3d_model(data: dict):
         x2 = wall.x2
         y2 = wall.y2
 
-        if wall.type == "door":
+        if wall.type == "door" or wall.type == "window":
+            thickness = wall.get_height() if wall.is_horizontal() else wall.get_width()
+            new_thickness = 0.2
+            if new_thickness > thickness:
+                new_thickness = 0.8 * thickness
+
             builder.add_quad(
                 [x1, y1, 0],
                 [x1, y2, 0],
@@ -433,12 +438,12 @@ def build_3d_model(data: dict):
 
             if wall.is_horizontal():
                 center = (y1 + y2) * 0.5
-                y1 = center - 0.1
-                y2 = center + 0.1
+                y1 = center - new_thickness * 0.5
+                y2 = center + new_thickness * 0.5
             else:
                 center = (x1 + x2) * 0.5
-                x1 = center - 0.1
-                x2 = center + 0.1
+                x1 = center - new_thickness * 0.5
+                x2 = center + new_thickness * 0.5
 
         if wall.type == "window":
             builder.add_cube(x1, y1, x2, y2, 0, height / 3)
