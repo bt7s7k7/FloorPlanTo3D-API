@@ -47,7 +47,7 @@ RUN python3.6 -m pip install --ignore-installed -r ${PROGRAM_PATH}/requirements.
 
 COPY ./weights ${PROGRAM_PATH}/weights
 COPY ./mrcnn ${PROGRAM_PATH}/mrcnn
-COPY ./application.py ./MeshBuilder.py ./Wall.py ${PROGRAM_PATH}/
+COPY ./application.py ./MeshBuilder.py ./build_3d_model.py ${PROGRAM_PATH}/
 
 EXPOSE 8081
 
