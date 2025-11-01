@@ -45,7 +45,8 @@ RUN python3.6 -m pip install --upgrade pip
 COPY ./requirements.txt ${PROGRAM_PATH}/requirements.txt
 RUN python3.6 -m pip install --ignore-installed -r ${PROGRAM_PATH}/requirements.txt
 
-COPY ./weights ${PROGRAM_PATH}/weights
+COPY ./weights/maskrcnn_15_epochs.h5.tar.* ./weights/decompress.sh ${PROGRAM_PATH}/weights/
+RUN cd ${PROGRAM_PATH}/weights && ./decompress.sh && rm maskrcnn_15_epochs.h5.tar.*
 COPY ./mrcnn ${PROGRAM_PATH}/mrcnn
 COPY ./application.py ./MeshBuilder.py ./build_3d_model.py ${PROGRAM_PATH}/
 
